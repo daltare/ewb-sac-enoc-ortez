@@ -50,8 +50,21 @@ ui <- fluidPage(
     fluidRow(
         column(12,
             leafletOutput(outputId = 'map_enoc', 
-                          height = 600)
-        )
+                          height = 600))#,
+        # column(9),
+        # column(3, 
+        #        p(tags$strong('Note - marker sizes: '), 
+        #          tags$li('Existing latrines = percent full'),
+        #          tags$li('Water quality = # of colonies w/o air'),
+        #          tags$li('Well = water depth (inverse)')
+        #        )
+        # ),
+        # column(3, 
+        #        p(tags$strong('Marker Sizes: '), br(), 
+        #          HTML('&#8226 Existing latrines = percent full'), br(),
+        #          HTML('&#8226 Water quality = # of colonies w/o air'), br(),
+        #          HTML('&#8226 Well = water depth (inverse)'))
+        # )
     )
 )
 
@@ -271,7 +284,7 @@ server <- function(input, output) {
                                                                     TRUE ~ as.numeric(colonies_without_air))),
                              options = pathOptions(pane = "water_quality"),
                              # radius = ~log(col_wo_air_plot) * 4 + 5,
-                             radius = ~ col_wo_air_plot / 5 + 5,
+                             radius = ~ col_wo_air_plot / 8 + 5,
                              stroke = TRUE, 
                              weight = 0.5, 
                              color = 'black', 
@@ -329,9 +342,12 @@ server <- function(input, output) {
                                  mutate(broken = case_when(broken == 'X' ~ 'Yes',
                                                            TRUE ~ 'No'),
                                         near_full = case_when(near_full == 'X' ~ 'Yes',
-                                                              TRUE ~ 'No')),
+                                                              TRUE ~ 'No')) %>% 
+                                 mutate(percent_full_map = case_when(latrine_percent_full_percent == 'N/A' ~ 
+                                                                         50,
+                                                                     TRUE ~ as.numeric(latrine_percent_full_percent))),
                              options = pathOptions(pane = "latrines_existing"),
-                             radius = 5,
+                             radius = ~ percent_full_map * 0.1 + 3,
                              stroke = TRUE, 
                              weight = 0.5, 
                              color = 'black', 
@@ -351,7 +367,7 @@ server <- function(input, output) {
                                              '<b>', 'Status: ', '</b>', latrine_status, '<br/>',
                                              '<b>', 'Age (yr): ', '</b>', latrine_age_yr,'<br/>',
                                              '<b>', 'Number of Users: ', '</b>', number_of_latrine_users, '<br/>', 
-                                             '<b>', 'Pit Dimensions (m): ', '</b>', pit_length_m, ' x ', pit_width_m, ' x ', pit_depth_m, '<br/>',
+                                             '<b>', 'Pit Dimensions (m): ', '</b>', round(as.numeric(pit_length_m), 1), ' x ', round(as.numeric(pit_width_m), 1), ' x ', round(as.numeric(pit_depth_m), 1), '<br/>',
                                              '<b>', 'Percent Full: ', '</b>', latrine_percent_full_percent, '<br/>',
                                              '<b>', 'Sludge Accumulation Rate: ', '</b>', round(as.numeric(sludge_accumulation_rate_m3_person_yr), 4), '<br/>',
                                              '<b>', 'Structure Materials: ', '</b>', latrine_structure_materials, '<br/>',
@@ -435,6 +451,15 @@ server <- function(input, output) {
                                                ),
                              options = layersControlOptions(collapsed = TRUE,
                                                             autoZIndex = TRUE))
+        
+        
+        rr <- p(tags$strong('Marker Sizes: '), br(), 
+                HTML('&#8226 Existing latrines = percent full'), br(),
+                HTML('&#8226 Water quality = # of colonies w/o air'), br(),
+                HTML('&#8226 Well = water depth (inverse)'))
+        
+        l_enoc <- l_enoc %>% addControl(rr, position = 'bottomright')
+        
         
         # legend ----
         l_enoc <- l_enoc %>% 
