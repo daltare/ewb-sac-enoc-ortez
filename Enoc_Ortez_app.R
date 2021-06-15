@@ -101,7 +101,7 @@ server <- function(input, output) {
                          group = legend_group, 
                          layerId = legend_layer, 
                          title = legend_title,
-                         position = 'bottomright', 
+                         position = 'topright', 
                          )
                )
     }
@@ -112,7 +112,8 @@ server <- function(input, output) {
         l_enoc <- leaflet()
         
         l_enoc <- l_enoc %>%
-            addMapPane("water_quality", zIndex = 400) %>%
+            addMapPane("tiles", zIndex = 400) %>%
+            addMapPane("water_quality", zIndex = 401) %>%
             addMapPane("wells", zIndex = 410) %>% 
             addMapPane("perc_soil", 420) %>% 
             addMapPane("households", zIndex = 421) %>%
@@ -143,7 +144,8 @@ server <- function(input, output) {
         for (provider in basemap_options) {
             l_enoc <- l_enoc %>% 
                 addProviderTiles(provider, 
-                                 group = provider)
+                                 group = provider,
+                                 options = pathOptions(pane = "tiles"))
         }
         
         # add the min-map window
@@ -438,7 +440,9 @@ server <- function(input, output) {
                              label = ~glue('Household (Site ID: {name})')
             )
         
-        # layers control ----
+        
+        
+        # layers control ----   
         l_enoc <- l_enoc %>% 
             addLayersControl(baseGroups = basemap_options,
                              overlayGroups = c('Wells', 
@@ -450,15 +454,11 @@ server <- function(input, output) {
                                                'Sites Legend'
                                                ),
                              options = layersControlOptions(collapsed = TRUE,
-                                                            autoZIndex = TRUE))
+                                                            autoZIndex = TRUE, 
+                                                            options = pathOptions(pane = "tiles")))
         
         
-        rr <- p(tags$strong('Marker Sizes: '), br(), 
-                HTML('&#8226 Existing latrines = percent full'), br(),
-                HTML('&#8226 Water quality = # of colonies w/o air'), br(),
-                HTML('&#8226 Well = water depth (inverse)'))
         
-        l_enoc <- l_enoc %>% addControl(rr, position = 'bottomright')
         
         
         # legend ----
@@ -481,6 +481,17 @@ server <- function(input, output) {
                             title = 'Site Types', 
                             opacity = 0.8) %>%
             {.}
+        
+        marker_info <- p(tags$strong('Marker Sizes: '), br(), 
+                         HTML('&#8226 Existing latrines = percent full'), br(),
+                         HTML('&#8226 Water quality = # of colonies w/o air'), br(),
+                         HTML('&#8226 Well = water depth (inverse)'))
+        
+        l_enoc <- l_enoc %>% addControl(marker_info, 
+                                        position = 'topright'#, 
+                                        # group = 'Sites Legend'#,
+                                        # layer_name = 'sites_legend'
+        )
         
     })
     
